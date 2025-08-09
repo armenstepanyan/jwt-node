@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>JWT Login</title>
+</head>
+<body>
+  <h1>Login</h1>
+  <form id="loginForm">
+    <input type="text" id="username" placeholder="Username" value="admin" required><br>
+    <input type="password" id="password" placeholder="Password" value="123456" required><br>
+    <button type="submit">Login</button>
+  </form>
+
+  <button id="getProfile" disabled>Get Profile</button>
+  <button id="wrongToken">Send Wrong Token</button>
+  <pre id="output"></pre>
+
+  <script>
+    let token = null;
+
+    // Handle login form submit
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        token = data.token;
+        document.getElementById('output').textContent = 'JWT: ' + token;
+        document.getElementById('getProfile').disabled = false;
+      } else {
+        document.getElementById('output').textContent = 'Login failed';
+      }
+    });
+
+    // Handle profile request
+    document.getElementById('getProfile').addEventListener('click', async () => {
+      const res = await fetch('/profile', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+      } else {
+        document.getElementById('output').textContent = 'Unauthorized or token expired';
+      }
+    });
+
+    document.getElementById('wrongToken').addEventListener('click', async () => {
+      const res = await fetch('/profile', {
+        headers: { 'Authorization': 'Bearer ' + `${token}123` }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+      } else {
+        document.getElementById('output').textContent = 'Unauthorized or token expired';
+      }
+    });
+  </script>
+</body>
+</html>
